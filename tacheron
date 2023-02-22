@@ -1,0 +1,213 @@
+#!/bin/bash
+
+a=1
+set $(date)
+secondes=$(echo $5 | cut -f3 -d':')
+sl=$( expr 15 - $secondes % 15 )
+sleep $sl
+
+while [ $a > 0 ]
+do	
+	set $(date)
+	case $1 in
+	        Mon) jour=1;;
+       		Tue) jour=2;;
+        	Wed) jour=3;;
+        	Thu) jour=4;;
+        	Fri) jour=5;;
+        	Sat) jour=6;;
+        	Sun) jour=0;;
+	esac
+	nb=$2
+	case $3 in
+        	Jan) mois=1;;
+        	Feb) mois=2;;
+        	Mar) mois=3;;
+        	Apr) mois=4;;
+        	May) mois=5;;
+        	Jun) mois=6;;
+        	Jul) mois=7;;
+        	Aug) mois=8;;
+        	Sep) mois=9;;
+        	Oct) mois=10;;
+        	Nov) mois=11;;
+        	Dec) mois=12;;
+	esac
+	heures=$(echo $5 | cut -f1 -d':') 
+	if [ $6 = 'PM' ]
+		then heures=$(expr $heures + 12)
+	fi
+	mins=$(echo $5 | cut -f2 -d':')
+	secondes=$(echo $5 | cut -f3 -d':')
+	echo $secondes
+	cat /etc/tacherontab > /etc/tacheron/root
+	for f in $(ls /etc/tacheron)							#f prend le nom des fichiers	
+	do	
+		nom=$( echo $f | awk -F"tacherontab" '{ print $NF }' )
+		if [[ $( egrep $nom /etc/tacheron.allow ) == $nom || $f = "root" ]]	#tester si le fichier est pour un utilisateur permis d'utiliser tacheron
+			then
+				sed 's/^ /wrongformat /g' /etc/tacheron/$f >> test	#gerer espace au debut d'une ligne
+				cat test > /etc/tacheron/$f
+				rm test	
+				borne=$(wc -l /etc/tacheron/$f | cut -f1 -d' ' )
+				for (( j=1 ; j<=$borne ; j++ ))			#boucle sur les lignes du fichier
+				do
+					touch com acceptable traitement
+					rm com acceptable traitement
+					touch acceptable
+					ligne=$( sed -n ''$j'p' /etc/tacheron/$f )
+					echo "$ligne" > ligne
+					touch exe$f$j
+					chmod +777 exe$f$j
+					awk '{ for ( i=7 ; i<NF ; i++ ) printf("%s " ,$i); printf("%s\n" ,$NF) }' ligne >> exe$f$j        #placer la commande de l'utilisateur dan
+					set $( sed -n ''$j'p' /etc/tacheron/$f )
+					declare -a tab=( $5 $6 $4 $3 $2 $1 )
+					for (( h=0 ; h<7 ; h++ ))
+					do
+						if [[ $(echo ${tab[$h]} ) = $( ls | grep "${tab[$h]}" ) ]]
+							then
+								tab[$h]="etoile"
+						fi
+					done
+       					for (( i=0 ; i<6 ; i++ ))
+       					do
+               					case $i in
+                       					0) var=$mois; min="1"; max="12";;
+                       					1) var=$jour; min="0"; max="6";;   
+							2) var=$nbjour; min="1"; max="31";;   
+                      					3) var=$heures; min="0"; max="23";;
+                       					4) var=$mins; min="0"; max="59";;
+							5) if [[ $( expr $secondes % 15	) -le 1 ]]
+								then
+									var=$( expr $secondes / 15 )
+									pause=$var
+								else pause=$( expr $secondes / 15 + 1 )
+								     var=$( expr $pause % 4 )
+							   fi 
+							   echo $var
+						   		   
+						esac
+						if [[ $(echo ${tab[0]} ) = "wrongformat" ]]
+							then
+								echo "wrong dates"; break;
+						fi			
+						echo ${tab[$i]} | cut -f2 -d'-' >traitement           					# traitement a-b sans /
+						if [[ $(echo ${tab[$i]} ) = "etoile" ]]
+							then
+								echo "etoile" >> acceptable
+							elif [[ $(echo ${tab[$i]} | grep "/") = "${tab[$i]}" ]]			#cas de "/"		
+                						then											
+									echo ${tab[$i]} | awk ' BEGIN { FS="/"}
+                							{ printf ( " %s %s\n ",$1 ,$2) } ' >> parties
+                							read interv duree <parties
+									if [[ $(echo $interv ) = $(echo * ) ]]
+                                                       				then
+                                                               				interv="etoile"
+                                               				fi
+               								echo $var >parties
+                                                                        p1=$(echo $interv | cut -f1 -d'-')
+									p2=$(echo $interv | cut -f2 -d'-')
+									if [[ $(echo $p1 ) == "etoile" ]]		#cas */duree
+                        							then
+                                           						awk 'BEGIN{ d='$duree' }
+                                               						$1 % d ==0 { print "1" }' parties >>acceptable
+                       								else
+											if [[ $p1 -ge $min && $p2 -le $max && $p2 -ge $p1 ]]
+                                                						then    
+													for (( c=$p1 ; c<=$p2 ; c++))
+                                                        						do
+                                                               							awk -v var=$c 'BEGIN{ d='$duree' }
+                                                               							$1 % d ==0 && $1 ==var  { print var }' parties >>acceptable            
+                                                       							done
+                                                						else
+                                                      							echo "Intervalle faux dans 1 $f $j'eme ligne"                                                 
+                                               						fi
+                                       					fi
+									rm parties
+							elif [[ $(echo ${tab[$i]} | grep ",") = ${tab[$i]} ]]							#cas de ","
+								then
+									echo ${tab[$i]} | awk -F"," '{ for ( i=1 ; i<=NF; i++ ) printf ( "%s\n" ,$i) } ' >> parties
+									cat parties
+									echo $var >parties2
+									cat parties2
+									for i in $( cat parties )
+									do
+										echo $i
+										awk -v var=$i '$1 ==var { print var }' parties2 >>acceptable
+									done
+									rm parties parties2
+	
+							elif [[ $(wc -c traitement | cut -f1 -d' ') -le 3 && $(echo ${tab[$i]} | grep "-") = ${tab[$i]} ]]	#cas de "-" sans "/"
+								then	
+									echo ${tab[$i]} | awk ' BEGIN { FS="-"} { printf ( "%s %s\n",$1 ,$2) } ' >> parties
+									read p1 p2 <parties
+                                               				echo $var >parties
+									if [[ $p2 -ge $p1 && $p2 -le $max && $p1 -ge $min ]]
+                                              					then
+                                                      					for (( c=$p1 ; c<=$p2 ; c++))
+                                                      					do
+                                                              					awk -v var=$c ' $1 ==var  { print var }' parties >>acceptable           
+                                                       					done
+                                               					else
+                                                       					echo "Intervalle faux dans 2 $f $j'eme ligne"                                                  
+                                               				fi
+									rm parties
+							elif [[ $(echo ${tab[$i]} | grep "~") = ${tab[$i]} ]] 							#cas de a-b~c 
+                                       				then
+									echo ${tab[$i]} | awk ' BEGIN { FS="~"}
+                                               				{ printf ( "%s\n",$1 ) }' >> parties
+									p1=$(cut -f1 -d'-' parties)
+									p2=$(cut -f2 -d'-' parties)
+									echo $var > parties
+                                              				echo ${tab[$i]} | awk ' BEGIN { FS="~"}
+                                               				{ for ( i=2 ; i<=NF; i++ ) printf ( "%s\n",$i) }' >> parties2
+									if [[ $p2 -ge $p1 && $p2 -le $max && $p1 -ge $min ]]
+                                               					then
+                                                       					for (( c=$p1 ; c<=$p2 ; c++ ))
+                                                       					do
+                                                              					awk -v var=$c ' $1 ==var  { print var }' parties >>fich
+                                                       					done
+											read z <fich
+											if [[ $(cat parties2 | egrep "^$z$") != $z ]]
+												then
+													echo 1 >> acceptable
+											fi
+                                               					else
+                                                       					echo "Intervalle faux dans 3 $f $j'eme ligne"
+                                               				fi
+									rm parties parties2 fich
+							elif [[ $(expr ${tab[$i]} + 1 - 1 ) = ${tab[$i]} ]]							#cas d'un nombre
+								then
+									if [[ ${tab[$i]} -eq $var ]]
+										then 
+											echo 1 >>acceptable
+										else 
+											echo nope
+									fi
+							else echo "wrong dates dans $f $j'eme ligne"
+						fi
+               					if [[ $( wc -l acceptable | cut -f1 -d' ') = $i ]]
+               						then 
+							break;
+							rm fich
+                				fi
+				done
+				pauseb4exec=$( expr $pause \* 15 - $secondes )
+				if [[ $pauseb4exec -eq -1 ]]
+					then pauseb4exec=0
+				fi
+				echo $pauseb4exec"pauseexec"
+				if [[ $( wc -l acceptable | cut -f1 -d' ' ) == "6" && $pauseb4exec -ge 0 ]]
+					then
+						echo "commande a executer"
+						echo "for (( i=1 ; i<2 ; i++ )) ; do sleep $pauseb4exec ; chmod +x exe$f$j ; ./exe$f$j; cat exe$f$j >> /var/log/tacheron ; rm exe$f$j ; done&" >com
+						chmod +x com
+						./com
+					else rm exe$f$j
+				fi
+			done				
+		fi
+	done
+        sl=$( expr 15 - $secondes % 15 )
+	sleep $sl
+done&

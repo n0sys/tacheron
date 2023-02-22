@@ -1,0 +1,48 @@
+#! /bin/bash
+#Accessible par root seulement 
+#Donne et revoke la permission d'acces a la commande tacheron
+if [ $# -eq 2 ]                    # nbr d'arguments 
+	then	
+		if [[ $( ls /home | egrep "$2" ) = $2 ]] 						#verifier que le deuxieme argument est un utilisateur  
+			then while getopts ad arg           						# options
+			do 
+				case $arg in        							# -a pour donner -d pour revoker
+
+				a) if [[ $( cat /etc/tacheron.deny | egrep "$2" )  = $2 ]] 		# verifier si l'utilisateur est dans deny
+				 	then
+				       		echo $2 >> /etc/tacheron.allow				# mettre l'utilisateur dans allow
+						./rem $2 /etc/tacheron.deny           			# script qui efface le nom de l'utilisateur du fichier
+			  	  
+
+				   	elif [[ $( cat /etc/tacheron.allow | egrep "$2" )  != $2 ]]	# verifier si l'utilisateur n'est pas deja dans allow (nouvel utilisateur)
+						then 
+				   			echo $2 >> /etc/tacheron.allow
+		     		   
+			   		else
+						echo "L'utilisateur etait deja dans tacheron.allow"			   
+       				fi;;
+
+				d) if [ $( cat /etc/tacheron.allow | egrep "$2" )  = $2 ] 		# verifier si l'utilisateur est dans allow
+					then 
+					  	 echo $2 >> /etc/tacheron.deny				# mettre l'utilisateur dans deny
+					  	 ./rem $2 /etc/tacheron.allow
+
+				  	 elif [[ $( cat /etc/tacheron.deny | egrep "$2" )  != $2 ]] 	# verifier si l'utilisateur n'est pas deja dans deny (nouvel utilisateur)
+				   		then 
+					   		echo $2 >> /etc/tacheron.deny
+
+				  	 else
+                                        	echo "L'utilisateur etait deja dans tacheron.allow"
+				   fi;;	
+
+				\?) echo "Veuillez mettre -a /user/ ou -d /user/";
+				exit;;   								# mauvaise option 
+				esac
+			done
+		else
+			echo "Le nom mis n'est pas un utilisateur"
+
+		fi
+else
+	echo "Veuillez mettre -a /user/ ou -d /user/"	
+fi  2>/dev/null  

@@ -1,0 +1,12 @@
+#! /bin/bash
+
+echo "Tacherontab permet de gerer les commandes a executer. La syntaxe de tacherontab est la suivante : tacherontab [-u user] {-l | -r | -e}
+tacherontab [-u user] -e: crée ou édite le fichier contenant les commandes a executer. Les commandes sont ecrites de la maniere suivante: 
+Chaque  ligne  du  fichier  tacherontab  contient  7 champs. 
+Les 6  premiers  champs  déterminent  les moments d'exécution de la tâche décrite au 7ème champ. Les 6 premiers, séparés par des espaces, appelés champs temporels, décrivent  la  périodicité:
+15 secondes(0-3), minutes (0-59), heures (0-23), jour du mois (1-31), mois de l'année (1-12), jour de la semaine (0-6, 0=dimanche). 
+Le  7ème est la  commande  à  exécuter,  ce  peut  être naturellement un script.
+
+tacherontab [–u user] -l: affiche le fichier des commandes a executer.
+
+tacherontab [–u user] -r: efface  le fichier des commandes a executer." 

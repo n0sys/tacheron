@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#pour enlever une expression d'un fichier
+#sous la forme : rem /expression/ /fichier/ 
+
+if [ -w $2 ]	
+	then
+		sed -e 's/^/ /g' -e 's/$/ /g' $2 | sed -e 's/ '$1' / /g' | sed -e 's/  / /g' >> sed2
+	     	sed -e 's/^ //g' -e 's/$/ /g' sed2 | egrep -v '^ *$' >> sed3
+	     	cat sed3 > $2
+	    	rm sed2 sed3
+	    
+	else
+	       	echo "pas de permisson d'ecrire dans le fichier"
+fi

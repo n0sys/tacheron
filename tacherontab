@@ -1,0 +1,29 @@
+#!/bin/bash
+#tacherontab
+
+if [[ $# -eq 3 ]]							#verifier qu'on a 3 arguments
+	then 	
+		if [[ $( whoami ) = $2 || $( whoami ) = "root" ]]	#verifier que la personne connectee est l'utilisateur de la commande ou root       	
+               		then while getopts u: arg
+			do 
+				case $arg in 
+				u) while getopts lre ar			# -u doit necessairement etre dans l'ecriture	
+				   do
+					case $ar in
+						l) cat /etc/tacheron/tacherontab$2 ;;
+						r) rm /etc/tacheron/tacherontab$2 ;;
+						e) cat /etc/tacheron/tacherontab$2 > /tmp/tmp
+						   vi /tmp/tmp
+						   cat /tmp/tmp > /etc/tacheron/tacherontab$2 ;;
+				   		\?) echo "utilise la commande tacheronhelp pour aide"; exit ;;
+                                        esac
+                                   done;;
+				\?) echo "utilise la commande tacheronhelp pour aide"; exit ;; 
+				esac	
+			done
+			else 
+				echo "Seulement l'utilisateur peut gerer ses commandes"
+		fi
+	else
+	       	echo "utilise la commande tacheronhelp pour aide"		
+fi
